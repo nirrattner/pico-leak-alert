@@ -14,7 +14,11 @@ pico_sdk_init()
 add_executable(leak_alert
     audio.c
     audio.h
+    events.c
+    events.h
     main.c
+    timer.c
+    timer.h
     )
 
 pico_enable_stdio_usb(leak_alert 1)
