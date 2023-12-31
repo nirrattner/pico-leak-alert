@@ -13,9 +13,12 @@
 #define TIMER_ID (0)
 #define TIMER_PERIOD_US (500000)
 
+#define TONE_EVENT_COUNT (4)
+
 typedef enum {
   EVENT__NONE = 0,
   EVENT__LED_TOGGLE = (1 << 0),
+  EVENT__TONE = (1 << 2),
 } event_t;
 
 typedef struct {
@@ -24,7 +27,7 @@ typedef struct {
   volatile uint32_t audio_index;
   uint32_t pwm_slice_id;
   uint8_t led_state;
-
+  uint32_t tone_counter;
 } context_t;
 static context_t context;
 
@@ -46,6 +49,8 @@ int main() {
   context.event = EVENT__NONE;
   context.audio_index = 0;
 
+  context.tone_counter = 0;
+
   // LED
   context.led_state = 1;
   cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, context.led_state);
@@ -64,7 +69,14 @@ int main() {
       event_led_toggle();
       context.event &= ~EVENT__LED_TOGGLE;
     }
-    __wfe();
+    if (context.event & EVENT__TONE) {
+      audio_play(AUDIO__FAILURE_CHIME);
+      context.event &= ~EVENT__TONE;
+    }
+
+    if (context.event == 0) {
+      __wfe();
+    }
   }
 }
 
@@ -80,5 +92,11 @@ static void timer_interrupt_callback(void) {
 
   context.timer_expiry += TIMER_PERIOD_US;
   timer_hw->alarm[TIMER_ID] = context.timer_expiry;
+
+  context.tone_counter++;
+  if (context.tone_counter == TONE_EVENT_COUNT) {
+    context.tone_counter = 0;
+    context.event |= EVENT__TONE;
+  }
 }
 
