@@ -4,6 +4,7 @@
 typedef enum {
   AUDIO__SUCCESS_CHIME = 0,
   AUDIO__FAILURE_CHIME,
+  AUDIO__SIREN,
 
   NUM_AUDIO_TYPES,
 } audio_type_t;

@@ -6,15 +6,15 @@
 #include "timer.h"
 
 #define TIMER_ID (0)
-#define TIMER_PERIOD_US (1000)
+#define TIMER_PERIOD_US (1000000)
 
 typedef struct {
-  volatile uint32_t counter_ms;
+  volatile uint32_t counter_s;
   volatile event_t events_enabled;
-  volatile uint32_t event_counter_ms[NUM_EVENTS];
+  volatile uint32_t event_counter_s[NUM_EVENTS];
   volatile uint32_t timer_expiry_us;
 
-  uint32_t repeat_count_ms[NUM_EVENTS];
+  uint32_t repeat_count_s[NUM_EVENTS];
 } timer_context;
 static timer_context context;
 
@@ -24,24 +24,24 @@ void timer_open(void) {
   irq_set_exclusive_handler(TIMER_IRQ_0, timer_interrupt_callback);
   irq_set_enabled(TIMER_IRQ_0, true);
 
-  context.counter_ms = 0;
+  context.counter_s = 0;
   context.events_enabled = EVENT__NONE;
   context.timer_expiry_us = timer_hw->timerawl + TIMER_PERIOD_US;
   timer_hw->alarm[TIMER_ID] = context.timer_expiry_us;
   hw_set_bits(&timer_hw->inte, 1u << TIMER_ID);
 }
 
-void timer_enable_event(event_t event, uint32_t count_ms, timer_mode_t timer_mode) {
+void timer_enable_event(event_t event, uint32_t count_s, timer_mode_t timer_mode) {
   uint8_t event_index;
   context.events_enabled |= event;
 
   for (event_index = 0; event_index < NUM_EVENTS; event_index++) {
     if (event == (1 << event_index)) {
-      context.event_counter_ms[event_index] = context.counter_ms + count_ms;
+      context.event_counter_s[event_index] = context.counter_s + count_s;
       if (timer_mode == TIMER_MODE__ONCE) {
-        context.repeat_count_ms[event_index] = 0;
+        context.repeat_count_s[event_index] = 0;
       } else {
-        context.repeat_count_ms[event_index] = count_ms;
+        context.repeat_count_s[event_index] = count_s;
       }
       return;
     }
@@ -62,15 +62,15 @@ static void timer_interrupt_callback(void) {
 
   for (event_index = 0; event_index < NUM_EVENTS; event_index++) {
     if ((context.events_enabled & (1 << event_index))
-        && context.counter_ms == context.event_counter_ms[event_index]) {
+        && context.counter_s == context.event_counter_s[event_index]) {
       events_set(1 << event_index);
-      if (context.repeat_count_ms[event_index]) {
-        context.event_counter_ms[event_index] += context.repeat_count_ms[event_index];
+      if (context.repeat_count_s[event_index]) {
+        context.event_counter_s[event_index] += context.repeat_count_s[event_index];
       } else {
         context.events_enabled &= ~(1 << event_index);
       }
     }
   }
 
-  context.counter_ms++;
+  context.counter_s++;
 }

@@ -12,6 +12,8 @@ set(PICO_TIME_DEFAULT_ALARM_POOL_DISABLED 1)
 pico_sdk_init()
 
 add_executable(leak_alert
+    adc.c
+    adc.h
     audio.c
     audio.h
     events.c
