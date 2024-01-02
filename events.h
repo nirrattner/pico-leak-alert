@@ -3,11 +3,12 @@
 
 #include <stdint.h>
 
-#define NUM_EVENTS (1)
+#define NUM_EVENTS (2)
 
 typedef enum {
   EVENT__NONE = 0,
   EVENT__WATER_SAMPLE = (1 << 0),
+  EVENT__SIREN_DONE = (1 << 1),
 } event_t;
 
 void events_open(void);

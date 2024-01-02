@@ -64,7 +64,8 @@ void audio_open(void) {
 }
 
 void audio_play(audio_type_t audio_type) {
-  if (context.is_playing) {
+  if (context.is_playing
+      && context.audio_type == audio_type) {
     return;
   }
 
@@ -80,7 +81,7 @@ void audio_stop(void) {
   }
 
   context.is_playing = 0;
-  pwm_set_enabled(context.pwm_slice_id, true);
+  pwm_set_enabled(context.pwm_slice_id, false);
 }
 
 static void initialize_audio_configs(void) {

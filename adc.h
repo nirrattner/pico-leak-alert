@@ -2,7 +2,7 @@
 #define _ADC_H
 
 void adc_open(void);
-uint16_t adc_sample(void);
+uint16_t adc_get_sample(void);
 
 #endif
 

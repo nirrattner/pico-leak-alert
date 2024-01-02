@@ -13,7 +13,7 @@ void adc_open(void) {
   adc_select_input(ADC_INPUT);
 }
 
-uint16_t adc_sample(void) {
+uint16_t adc_get_sample(void) {
   return adc_read();
 }
 

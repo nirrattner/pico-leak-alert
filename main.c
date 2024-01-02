@@ -12,14 +12,16 @@
 #include "events.h"
 #include "timer.h"
 
+#define SIREN_AUDIO_DURATION_S (30)
 #define WATER_SAMPLE_PERIOD_S (1)
-#define WATER_SAMPLE_THRESHOLD (2000)
+#define WATER_ADC_THRESHOLD (1800)
 
-typedef struct {
-} context_t;
-static context_t context;
+// typedef struct {
+// } context_t;
+// static context_t context;
 
-static void timer_interrupt_callback(void);
+static void event_water_sample(void);
+static void event_siren_done(void);
 
 int main() {
   stdio_init_all();
@@ -31,12 +33,17 @@ int main() {
   events_open();
   timer_open();
 
-  timer_enable_event(EVENT__WATER_SAMPLE, SAMPLE_PERIOD_S, TIMER_MODE__REPEAT);
+  timer_enable_event(EVENT__WATER_SAMPLE, WATER_SAMPLE_PERIOD_S, TIMER_MODE__REPEAT);
 
   while (1) {
     if (events_get() & EVENT__WATER_SAMPLE) {
       events_clear(EVENT__WATER_SAMPLE);
-      printf("ADC: %u\n", adc_sample());
+      event_water_sample();
+    }
+
+    if (events_get() & EVENT__SIREN_DONE) {
+      events_clear(EVENT__SIREN_DONE);
+      event_siren_done();
     }
 
     if (events_get() == 0) {
@@ -45,4 +52,16 @@ int main() {
   }
 }
 
+static void event_water_sample(void) {
+  printf("ADC: %u\n", adc_get_sample());
+
+  if (adc_get_sample() > WATER_ADC_THRESHOLD) {
+    timer_enable_event(EVENT__SIREN_DONE, SIREN_AUDIO_DURATION_S, TIMER_MODE__ONCE);
+    audio_play(AUDIO__SIREN);
+  }
+}
+
+static void event_siren_done(void) {
+  audio_stop();
+}
 
